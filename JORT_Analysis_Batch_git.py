@@ -5,7 +5,7 @@ import numpy as np
 import pylab as pl
 import os 
 
-os.chdir("C://Users/cs16436/OneDrive - University of Bristol/Study4_MDDMINI/Study4_Results/Study4_JORT//")
+os.chdir("C://Users/cs16436/OneDrive - University of Bristol/Study4_MDDMINI/S4_Data/S4_JORT//")
 #("D://Back-ups/Python Scripts//")
 class Trial: #Defining what a trial is composed of 
     
@@ -21,8 +21,10 @@ class Trial: #Defining what a trial is composed of
         self.total_time=float(end_time-start_time)
         self.stimulus_index=stimulus_index
         self.times=times        
-        self.force_start=0
-        self.force_end=0
+        #self.force_start=0
+        #self.force_end=0
+        self.force_start=stimulus_index
+        self.force_end=stimulus_index
         self.effort=effort
         
         
@@ -35,6 +37,7 @@ class Trial: #Defining what a trial is composed of
         if self.force_start==len(self.times):
             self.ignored=True
         if self.reaction_time<0:
+       # if self.reaction_time==0:
             self.ignored=True
        
        
@@ -45,27 +48,35 @@ class Trial: #Defining what a trial is composed of
             plt.plot(self.forces)
             plt.axvline(self.force_start,color='b')
             plt.axvline(self.stimulus_index,color='g')
+            plt.axvline(self.force_end,color='r')
             plt.show()
             
 
 
     def find_reaction_time(self):
+        #start_stim_force=self.forces[self.stimulus_index]
         if len(self.times)!=0:
             if self.stimulus_index>len(self.times):
                 error_file.write("f/p no stimulus in trial "+str(self.participant)+" "+str(self.trial_number)+"\n")
                 self.reaction_time=-2
             else:
                 if self.force_start==len(self.times):
-                    self.reaction_time=-1  #MUST SET TO IGNORE THESE TRIALS WHERE DO NOT RESPOND TO STIMULUS
+                   self.reaction_time=-1  
                 else:
-                    self.reaction_time=self.times[self.force_start]-self.times[self.stimulus_index] #self.force_start
+                   self.reaction_time=self.times[self.force_start]-self.times[self.stimulus_index] #self.force_start
+                  # self.reaction_time=self.times[start_stim_force]-self.times[self.stimulus_index]
+                    
+        # while self.relative_force_start(self.forces) < 2 if self.forces > 2
+        #   self.
 
     def find_force_start(self): #finding start force
-        while self.force_start<len(self.forces) and self.forces[self.force_start]<2:
+        start_stim_force=self.forces[self.stimulus_index]
+       # while self.force_start<len(self.forces) and self.forces[self.force_start]<2:
+        while self.force_start<len(self.forces) and self.forces[self.force_start]<start_stim_force+2:
                 self.force_start+=1 
         
                 
-    def find_force_end(self): #finding force end
+    def find_force_end(self): #finding force end 
         self.force_end=self.force_start+1
         
         while self.force_end<len(self.forces) and self.forces[self.force_end]>2:
@@ -74,7 +85,7 @@ class Trial: #Defining what a trial is composed of
     def find_force_average(self):
         if self.force_end-self.force_start==1:
             return 0.0
-        return np.mean(self.relative_forces[self.force_start:self.force_end])
+        return np.mean(self.relative_forces[self.force_start:self.force_end])*100
     
     def find_velocity_start(self):
         self.velocity_start<len(self.velocity_approach) 
@@ -82,7 +93,7 @@ class Trial: #Defining what a trial is composed of
         
     def find_max_force(self):
         if len(self.relative_forces[self.force_start:self.force_end]):
-            return np.max(self.relative_forces[self.force_start:self.force_end])                    
+            return np.max(self.relative_forces[self.force_start:self.force_end])*100                 
         else:
             return 0
     
@@ -124,11 +135,12 @@ class Experiment:
 
         self.trials=[] #Empty trials list
         
-        
+        #stimulus_starts=[0]
+             
         for i in range(0,len(trial_starts)-1): #for each value in range 0 to length (-1 of next trial start) 
-            stimulus_start=trial_starts[i]
+            stimulus_start=trial_starts[i]+2 #added change
             #while self.velocity_avoid[stimulus_start]+self.velocity_approach[stimulus_start]<0.5:
-            while self.velocity_approach[stimulus_start] == 99.25:
+            while self.velocity_approach[stimulus_start] > 500:
                 stimulus_start+=1
 #            print (stimulus_start,self.velocity_approach[stimulus_start:stimulus_start+5])
             self.trials.append(
@@ -140,7 +152,8 @@ class Experiment:
                             trial_efforts[trial_starts[i]],
                             trial_types[trial_starts[i]],
                             trial_numbers[trial_starts[i]],
-                            self.max_force,stimulus_start-2-trial_starts[i])
+                            #self.max_force,stimulus_start-2-trial_starts[i])
+                            self.max_force,stimulus_start-trial_starts[i])
                     )
 
 
@@ -164,6 +177,7 @@ def load_all_participants(participant_name_file): #load participant numbers from
 
 def make_zero(n):
     return [0 for _ in range(0,n)]
+
 
 def output(out_files,participant,average_force_ec,max_forces_ec,not_dropped_ec,reaction_time_ec):
     for file in out_files:
@@ -235,8 +249,7 @@ for file_name in participant_file_names:
         for trial in experiment.trials: # for each trial
             if trial.condition==condition: #if same conditions #if not trial.ignored and trial.condition
                 average_forces[condition]+=trial.find_force_average() # append average forces for each same trial  
-                start_time[condition]+=trial.force_start
-                reaction_time[condition]+=trial.reaction_time         
+                start_time[condition]+=trial.force_start 
                 end_time[condition]+=trial.force_end
                 max_forces[condition]+=trial.find_max_force()
                 force_c+=1
@@ -249,6 +262,9 @@ for file_name in participant_file_names:
             reaction_time[condition]/=force_c
         else:
             average_forces[condition]=0
+            
+            
+
 #for i in range(len(average_forces)):
 #print (i,average_forces[i],max_forces[i],not_dropped[i],reaction_time[i])
     
@@ -265,24 +281,36 @@ for file_name in participant_file_names:
     for effort_i,effort in enumerate(effort_values): #for each different trial type
         for condition_i,condition in enumerate(condition_values):
             force_c_ec=0
+            rt_c_ec=0 #ADDED
             for trial in experiment.trials: # for each trial
                 #if not trial.ignored and trial.condition==condition and abs(trial.effort-effort)<tol: #if same conditions 
                 if trial.condition==condition and abs(trial.effort-effort)<tol:
                         average_force_ec[effort_i][condition_i]+=trial.find_force_average() # append average forces for each same trial  
                         start_time_ec[effort_i][condition_i]+=trial.force_start        
                         end_time_ec[effort_i][condition_i]+=trial.force_end
-                        reaction_time_ec[effort_i][condition_i]+=trial.reaction_time
+                        #if trial.reaction_time>0: #WAS >0
+                         #   reaction_time_ec[effort_i][condition_i]+=trial.reaction_time #ADDED
+                          #  rt_c_ec+=1 # ADDED                      
+                        #if trial.reaction_time == 0:
+                         #   np.replace.trial.reaction_time = -9999
                         max_forces_ec[effort_i][condition_i]+=trial.find_max_force()
                         force_c_ec+=1
+                        if trial.reaction_time>0: #WAS >0
+                            reaction_time_ec[effort_i][condition_i]+=trial.reaction_time #ADDED
+                            rt_c_ec+=1 # ADDED 
             not_dropped_ec[effort_i][condition_i]+=force_c_ec
             if force_c_ec!=0: #if force not equal to 0
                 average_force_ec[effort_i][condition_i]/=force_c_ec #take average forces each condition
                 start_time_ec[effort_i][condition_i]/=force_c_ec
                 end_time_ec[effort_i][condition_i]/=force_c_ec
                 max_forces_ec[effort_i][condition_i]/=force_c_ec
-                reaction_time_ec[effort_i][condition_i]/=force_c_ec
+               # reaction_time_ec[effort_i][condition_i]/=rt_c_ec
             else:
                 average_force_ec[effort_i][condition_i]=0
+            if rt_c_ec!=0:
+                reaction_time_ec[effort_i][condition_i]/=rt_c_ec
+    
+    #np.where(trial.reaction_time==0,-9999,trial.reaction_time)
 
 #    for i in range(len(average_force_ec)):
 #        for j in range(len(average_force_ec[i])):
