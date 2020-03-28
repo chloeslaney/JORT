@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pylab as pl
 import os 
+import csv
 
 os.chdir("C://Users/cs16436/OneDrive - University of Bristol/Study4_MDDMINI/S4_Data/S4_JORT//")
 #("D://Back-ups/Python Scripts//")
@@ -61,7 +62,7 @@ class Trial: #Defining what a trial is composed of
                 self.reaction_time=-2
             else:
                 if self.force_start==len(self.times):
-                   self.reaction_time=-1  
+                   self.reaction_time=-1 
                 else:
                    self.reaction_time=self.times[self.force_start]-self.times[self.stimulus_index] #self.force_start
                   # self.reaction_time=self.times[start_stim_force]-self.times[self.stimulus_index]
@@ -169,6 +170,7 @@ def load_all_participants(participant_name_file): #load participant numbers from
         participant=participant.rstrip('\n') # extract the number participants
         participants.append(participant) #file of participants
     return participants
+
     
 #directory= os.chdir('\\ads.bris.ac.uk\filestore\MyFiles\StudentPG4\cs16436\Documents\PhD_SecondYear\Joystick Operated Runway Task (JORT)\Experiment2\\')
 #participant_file_name="filenames.txt"
@@ -178,12 +180,16 @@ def load_all_participants(participant_name_file): #load participant numbers from
 def make_zero(n):
     return [0 for _ in range(0,n)]
 
+column_names=(['ID','','','50_0','50_10','50_100','50_1000','80_0','80_10','80_100','80_1000','100_0','100_10','100_100','100_1000','120_0','120_10','120_100','120_1000'])
 
-def output(out_files,participant,average_force_ec,max_forces_ec,not_dropped_ec,reaction_time_ec):
+def output(out_files,participant,average_force_ec,max_forces_ec,not_dropped_ec,reaction_time_ec,reaction_time_points):
+   # out_files.writerow(column_names)
+    #out_files.writerow(str(item) for item in column_names)
     for file in out_files:
         file.write(participant)
         file.write(",,,")
     for i in range(len(average_force_ec)):
+        out_files[4].write(str(reaction_time_points[i]))
         for j in range(len(average_force_ec[i])):
             out_files[0].write(str(average_force_ec[i][j]))
             out_files[1].write(str(max_forces_ec[i][j]))
@@ -196,7 +202,10 @@ def output(out_files,participant,average_force_ec,max_forces_ec,not_dropped_ec,r
             else:   
                 for file in out_files:
                     file.write(",")
-                    
+                
+#with open('S4_jort_results_av_force.csv', 'a') as newFile:
+#    newFileWriter= csv.writer(newFile)
+#    newFileWriter.writerow(column_names)
     
 def make_out_files(file_name_root):
     out_files=[]
@@ -208,9 +217,11 @@ def make_out_files(file_name_root):
     out_files.append(file)    
     file=open(file_name_root+"_rt.csv","w") 
     out_files.append(file)
+    file=open(file_name_root+"_rt_points.csv","w")#ADDED2
+    out_files.append(file)#ADDED2
     return out_files
 
-out_file_name_root="jort_results_practice"
+out_file_name_root="S4_jort_results"
 
 error_file=open("jort_errors.txt","w")
 
@@ -244,7 +255,7 @@ for file_name in participant_file_names:
     #    i += step
  
        
-    for condition in range (0,11): #for each different trial type
+    for condition in range (0,11): #for each different trial type- NOT BEING USED*****
         force_c=0
         for trial in experiment.trials: # for each trial
             if trial.condition==condition: #if same conditions #if not trial.ignored and trial.condition
@@ -268,36 +279,32 @@ for file_name in participant_file_names:
 #for i in range(len(average_forces)):
 #print (i,average_forces[i],max_forces[i],not_dropped[i],reaction_time[i])
     
-
-
     average_force_ec=[[0.0 for _ in condition_values] for _ in effort_values]
     not_dropped_ec=[[0.0 for _ in condition_values] for _ in effort_values]
     start_time_ec=[[0.0 for _ in condition_values] for _ in effort_values]
     end_time_ec=[[0.0 for _ in condition_values] for _ in effort_values]
     max_forces_ec=[[0.0 for _ in condition_values] for _ in effort_values]
     reaction_time_ec=[[0.0 for _ in condition_values] for _ in effort_values]
+    reaction_time_points=[0.0 for _ in condition_values]
+    start_time_points=[0.0 for _ in condition_values]
+    end_time_points=[0.0 for _ in condition_values]
     force_c_ec=0
 
     for effort_i,effort in enumerate(effort_values): #for each different trial type
         for condition_i,condition in enumerate(condition_values):
             force_c_ec=0
-            rt_c_ec=0 #ADDED
+            rt_c_ec=0 #ADDED 
             for trial in experiment.trials: # for each trial
                 #if not trial.ignored and trial.condition==condition and abs(trial.effort-effort)<tol: #if same conditions 
                 if trial.condition==condition and abs(trial.effort-effort)<tol:
                         average_force_ec[effort_i][condition_i]+=trial.find_force_average() # append average forces for each same trial  
                         start_time_ec[effort_i][condition_i]+=trial.force_start        
                         end_time_ec[effort_i][condition_i]+=trial.force_end
-                        #if trial.reaction_time>0: #WAS >0
-                         #   reaction_time_ec[effort_i][condition_i]+=trial.reaction_time #ADDED
-                          #  rt_c_ec+=1 # ADDED                      
-                        #if trial.reaction_time == 0:
-                         #   np.replace.trial.reaction_time = -9999
                         max_forces_ec[effort_i][condition_i]+=trial.find_max_force()
                         force_c_ec+=1
-                        if trial.reaction_time>0: #WAS >0
-                            reaction_time_ec[effort_i][condition_i]+=trial.reaction_time #ADDED
-                            rt_c_ec+=1 # ADDED 
+                        if trial.reaction_time>0: 
+                            reaction_time_ec[effort_i][condition_i]+=trial.reaction_time 
+                            rt_c_ec+=1 
             not_dropped_ec[effort_i][condition_i]+=force_c_ec
             if force_c_ec!=0: #if force not equal to 0
                 average_force_ec[effort_i][condition_i]/=force_c_ec #take average forces each condition
@@ -309,20 +316,48 @@ for file_name in participant_file_names:
                 average_force_ec[effort_i][condition_i]=0
             if rt_c_ec!=0:
                 reaction_time_ec[effort_i][condition_i]/=rt_c_ec
+            else:
+                reaction_time_ec[effort_i][condition_i]=-9999
+        
+    for condition_i, condition in enumerate(condition_values):
+        rt_c_points=0
+        force_c_points=0
+        for trial in experiment.trials:
+            if trial.condition==condition:
+                start_time_points[condition_i]+=trial.force_start
+                end_time_points[condition_i]+=trial.force_end
+                force_c_points+=1
+                if trial.reaction_time>0:
+                    reaction_time_points[condition_i]+=trial.reaction_time
+                    rt_c_points+=1
+        if force_c_points!=0:
+            start_time_points[condition_i]/=force_c_points
+            end_time_points[condition_i]/=force_c_points
+        if rt_c_points!=0:
+            reaction_time_points[condition_i]/=rt_c_points
+        else:
+            reaction_time_points[condition_i]=-9999
+                    
     
-    #np.where(trial.reaction_time==0,-9999,trial.reaction_time)
 
 #    for i in range(len(average_force_ec)):
 #        for j in range(len(average_force_ec[i])):
 #            print (effort_values[i],condition_values[j],average_force_ec[i][j],max_forces_ec[i][j],not_dropped_ec[i][j],reaction_time_ec[i][j])
     print(experiment.participant)  
-    output(out_files,experiment.participant,average_force_ec,max_forces_ec,not_dropped_ec,reaction_time_ec)
+    output(out_files,experiment.participant,average_force_ec,max_forces_ec,not_dropped_ec,reaction_time_ec,reaction_time_points)
 
 
 
 for file in out_files:
     file.close()
 error_file.close()
+#
+#with open('S4_jort_results_av_force.csv', 'a') as newFile:
+#    newFileWriter= csv.writer(newFile)
+#    newFileWriter.writerow(column_names)
+#
+#for file in out_files:
+#    file.close()
     ##########################################
 
     
