@@ -181,7 +181,7 @@ def make_zero(n):
 
 column_names=(['ID','','','50_0','50_10','50_100','50_1000','80_0','80_10','80_100','80_1000','100_0','100_10','100_100','100_1000','120_0','120_10','120_100','120_1000'])
 
-def output(out_files,participant,average_force_ec,max_forces_ec,not_dropped_ec,reaction_time_ec,reaction_time_points,avg_force_points,max_force_points,trials_responded):
+def output(out_files,participant,average_force_ec,max_forces_ec,not_dropped_ec,reaction_time_ec,reaction_time_points,avg_force_points,max_force_points,trials_responded,stimulus_present):
    # out_files.writerow(column_names)
     #out_files.writerow(str(item) for item in column_names)
     for file in out_files:
@@ -192,6 +192,7 @@ def output(out_files,participant,average_force_ec,max_forces_ec,not_dropped_ec,r
         out_files[5].write(str(avg_force_points[i]))
         out_files[6].write(str(max_force_points[i]))
         out_files[7].write(str(trials_responded[i]))
+        out_files[8].write(str(stimulus_present[i]))
         for j in range(len(average_force_ec[i])): #for each trial in length average forces
             out_files[0].write(str(average_force_ec[i][j])) #average force for each effort and condition
             out_files[1].write(str(max_forces_ec[i][j]))
@@ -225,7 +226,9 @@ def make_out_files(file_name_root):
     out_files.append(file)
     file=open(file_name_root+"_max_force_points.csv","w")
     out_files.append(file)
-    file=open(file_name_root+"_trials_responded.csv","w")
+    file=open(file_name_root+"_trials_responded_points.csv","w")
+    out_files.append(file)
+    file=open(file_name_root+"_trials_stimpresent_.csv","w")
     out_files.append(file)
     return out_files
 
@@ -253,6 +256,7 @@ for file_name in participant_file_names:
     reaction_time=make_zero(condition_n)
     max_forces=make_zero(condition_n)
     trials_responded=make_zero(condition_n)
+    stimulus_present=make_zero(condition_n)
     force_c=0
  #force starts at 0
 #conditions: 0,1, 4,6, 7-10
@@ -300,6 +304,7 @@ for file_name in participant_file_names:
     start_time_points=[0.0 for _ in condition_values]
     end_time_points=[0.0 for _ in condition_values]
     trials_responded=[0.0 for _ in condition_values]
+    stimulus_present=[0.0 for _ in condition_values]
     force_c_ec=0
     
     # For each effort value and each point each (16 in total), calculate the average force, max force, reaction time.
@@ -351,6 +356,7 @@ for file_name in participant_file_names:
                     reaction_time_points[condition_i]+=trial.reaction_time
                     rt_c_points+=1
         trials_responded[condition_i]+=rt_c_points
+        stimulus_present[condition_i]+=force_c_points
         if force_c_points!=0:
             start_time_points[condition_i]/=force_c_points
             end_time_points[condition_i]/=force_c_points
@@ -369,7 +375,7 @@ for file_name in participant_file_names:
 #        for j in range(len(average_force_ec[i])):
 #            print (effort_values[i],condition_values[j],average_force_ec[i][j],max_forces_ec[i][j],not_dropped_ec[i][j],reaction_time_ec[i][j])
     print(experiment.participant)  
-    output(out_files,experiment.participant,average_force_ec,max_forces_ec,not_dropped_ec,reaction_time_ec,reaction_time_points,avg_force_points,max_force_points,trials_responded)
+    output(out_files,experiment.participant,average_force_ec,max_forces_ec,not_dropped_ec,reaction_time_ec,reaction_time_points,avg_force_points,max_force_points,trials_responded,stimulus_present)
 
 
 
